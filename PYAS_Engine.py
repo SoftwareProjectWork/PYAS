@@ -1,4 +1,5 @@
-import os, re, yara, time, math, json, numpy, base64, datetime, requests, Counter
+import os, re, yara, time, math, json, numpy, base64, datetime, requests
+from collections import Counter
 import ctypes, ctypes.wintypes, hashlib, pefile, threading, onnxruntime
 
 ####################################################################################################
@@ -843,17 +844,17 @@ class cloud_scanner:
     
     
     def calculate_file_entropy(file_path):
-    try:
-        with open(file_path, 'rb') as f:
-            data = f.read()
-        if not data:
-            return 0.0
-        entropy = 0
-        length = len(data)
-        frequencies = Counter(data)
-        for count in frequencies.values():
-            probability = count / length
-            entropy -= probability * math.log2(probability)
-        return round(entropy, 4)
-    except (PermissionError, FileNotFoundError):
-        return -1.0
+        try:
+            with open(file_path, 'rb') as f:
+                data = f.read()
+            if not data:
+                return 0.0
+            entropy = 0
+            length = len(data)
+            frequencies = Counter(data)
+            for count in frequencies.values():
+                probability = count / length
+                entropy -= probability * math.log2(probability)
+            return round(entropy, 4)
+        except (PermissionError, FileNotFoundError):
+            return -1.0
