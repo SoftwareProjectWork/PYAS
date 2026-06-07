@@ -935,7 +935,7 @@ class WindowAPI:
                 with self.lock_virus:
                     if not self.scan_running:
                         break
-                
+
                 norm_path = self.norm_path(file_path)
                 if not norm_path:
                     continue
@@ -952,10 +952,10 @@ class WindowAPI:
 
                     with self.lock_virus:
                         self.scan_count += 1
-                        
+
                     with self.lock_config:
                         suffix = self.pyas_config.get("suffix", [])
-                        
+
                     ext = os.path.splitext(norm_path)[-1].lower()
                     if ext not in suffix:
                         continue
@@ -965,12 +965,15 @@ class WindowAPI:
                         with self.lock_virus:
                             self.virus_results.append(norm_path)
                         if self._window:
-                            self._window.evaluate_js(f"if(window.addVirusResult) window.addVirusResult({json.dumps(result)}, {json.dumps(norm_path.replace(os.sep, '/'))});")
+                            self._window.evaluate_js(
+                                f"if(window.addVirusResult) window.addVirusResult({json.dumps(result)}, {json.dumps(norm_path.replace(os.sep, '/'))});")
                         self.cloud_check(norm_path)
-                        self.write_log("SCAN", "Virus Detected", source=norm_path, file_hash=self.calc_file_hash(norm_path))
+                        self.write_log("SCAN", "Virus Detected", source=norm_path,
+                                       file_hash=self.calc_file_hash(norm_path))
 
                     if self._window:
-                        self._window.evaluate_js(f"if(window.updateScanProgress) window.updateScanProgress({json.dumps(norm_path.replace(os.sep, '/'))});")
+                        self._window.evaluate_js(
+                            f"if(window.updateScanProgress) window.updateScanProgress({json.dumps(norm_path.replace(os.sep, '/'))});")
 
                 except Exception as e:
                     self.write_log("WARN", "Scan Engine", source=norm_path, detail=str(e), success=False)
@@ -983,7 +986,7 @@ class WindowAPI:
                 count = len(self.virus_results)
                 elapsed = int(time.time() - self.scan_start)
                 scanned = self.scan_count
-            
+
             with self.lock_config:
                 lang = self.pyas_config.get("language", "traditional_switch")
 
@@ -996,7 +999,7 @@ class WindowAPI:
                 "french_switch": f"{count} virus trouvés, {scanned} fichiers analysés, temps {elapsed}s",
                 "spanish_switch": f"Se encontraron {count} virus, {scanned} archivos escaneados, tiempo {elapsed}s",
                 "hindi_switch": f"{count} वायरस मिले, {scanned} फ़ाइलें स्कैन की गईं, समय {elapsed}s",
-                "arabic_switch": f"تم العثور على {count} فيروسات، تم فحص {scanned} ملفات، الوقت {elapsed} ثانية",
+                "arabic_switch": f"تم العثور على {count} فيروسات，تم فحص {scanned} ملفات，الوقت {elapsed} ثانية",
                 "russian_switch": f"Найдено {count} вирусов, проверено {scanned} файлов, время {elapsed}с",
                 "slovenian_switch": f"Najdenih {count} virusov, skeniranih {scanned} datotek, čas {elapsed}s"
             }
@@ -1004,8 +1007,16 @@ class WindowAPI:
 
             if self._window:
                 self._window.evaluate_js(f"if(window.finishScan) window.finishScan({json.dumps(result_msg)}, {count});")
-            self.write_log("INFO", "Scan Completed", detail=f"Found {count} viruses, scanned {scanned} files, time {elapsed}s")
+            self.write_log("INFO", "Scan Completed",
+                           detail=f"Found {count} viruses, scanned {scanned} files, time {elapsed}s")
 
+            # --- OTOMATİK RAPORLAMA ENTEGRASYONU ---
+            generate_scan_report(
+                scanned_count=scanned,
+                threats_found=list(self.virus_results),
+                scan_duration=float(elapsed),
+                report_path="report.json"
+            )
 ####################################################################################################
 
     def yield_files(self, targets):
@@ -2512,7 +2523,7 @@ def generate_scan_report(scanned_count, threats_found, scan_duration, report_pat
             json.dump(report_data, f, indent=4, ensure_ascii=False)
         return True
     except IOError:
-        print("Rapor dosyası diske yazılamadı.")
+        print("The report file could not be written to disk.")
         return False
 
 ####################################################################################################
@@ -2681,3 +2692,4 @@ if __name__ == "__main__":
     js_api.show_tray()
 
     webview.start()
+
